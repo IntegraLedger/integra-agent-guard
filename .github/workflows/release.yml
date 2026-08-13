@@ -52,16 +52,16 @@ on:
 # and changelogs; the publish loop below is ours. Derive the set from `private`, never a name pattern —
 # a name filter has silently broken twice here.
 #
-# ⛔ BOOTSTRAP: NOT YET RUN, AND THIS WORKFLOW CANNOT DO IT. Neither name has ever been published. npm can
-# neither configure trusted publishing for a package that does not exist (npm/cli#8544) nor stage a
-# brand-new name, so `npm stage publish` below FAILS with E401 for a first publish — after signing a
-# provenance statement into the public Sigstore transparency log, which a failed run does not undo.
+# BOOTSTRAP IS DONE, AND THIS FILE NOW OWNS PUBLISHING. Both names went live at 0.9.0 with provenance, so
+# trusted publishing is configurable for them and `npm stage publish` below works. The one-time
+# `bootstrap-publish.yml` has been deleted: it was the only path here that reached a registry token, this
+# workflow needs none, and removing it leaves NO standing credential path in this repository at all.
 #
-# The first release goes through `bootstrap-publish.yml`, which is still in this repository for exactly that
-# reason. Once it has run, DELETE it: it is the only path here that reaches a registry token, this workflow
-# needs none, and removing it leaves no standing credential path at all. Then this file owns publishing, and
-# a new package name added later needs that one-off again — a deliberate, supervised exception, not
-# something to work around here.
+# A BRAND-NEW PACKAGE NAME STILL CANNOT GO THROUGH HERE. npm can neither configure trusted publishing for a
+# package that does not exist (npm/cli#8544) nor stage a brand-new name, so `npm stage publish` FAILS with
+# E401 on a first publish — after signing a provenance statement into the public Sigstore transparency log,
+# which a failed run does not undo. Adding a name therefore needs that one-off bootstrap again: a
+# deliberate, supervised exception, restored and then deleted, never something to work around here.
 #
 # PROVENANCE. `npm publish --provenance` and GitHub artifact attestations both require a PUBLIC source
 # repository, which this one is. `NPM_CONFIG_PROVENANCE` is set below, and npm FAILS a publish it cannot
