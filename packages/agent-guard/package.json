@@ -1,0 +1,81 @@
+{
+  "name": "@integraledger/agent-guard",
+  "version": "0.9.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "CHANGELOG.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IntegraLedger/integra-agent-guard.git",
+    "directory": "packages/agent-guard"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "@integraledger/lcp-authority": "^0.10.1",
+    "@integraledger/lcp-binding-core": "^0.10.1",
+    "@integraledger/lcp-discovery": "^0.10.1",
+    "@integraledger/lcp-evidence": "^0.10.1",
+    "@integraledger/lcp-kernel": "^0.10.1",
+    "@integraledger/lcp-placement-ack": "^0.10.1",
+    "@integraledger/lcp-placement-ap2": "^0.10.1",
+    "@integraledger/lcp-placements": "^0.10.1",
+    "@integraledger/lcp-verify": "^0.10.1"
+  },
+  "devDependencies": {
+    "@integraledger/lcp-authority": "0.10.1",
+    "@integraledger/lcp-binding-core": "0.10.1",
+    "@integraledger/lcp-discovery": "0.10.1",
+    "@integraledger/lcp-evidence": "0.10.1",
+    "@integraledger/lcp-kernel": "0.10.1",
+    "@integraledger/lcp-placement-ack": "0.10.1",
+    "@integraledger/lcp-placement-acp": "0.10.1",
+    "@integraledger/lcp-placement-ap2": "0.10.1",
+    "@integraledger/lcp-placements": "0.10.1",
+    "@integraledger/lcp-verify": "0.10.1",
+    "@types/node": "catalog:",
+    "vitest": "catalog:"
+  },
+  "license": "Apache-2.0",
+  "description": "Integra Agent Guard — the buyer-side verify-before-sign guard for agentic purchases. Fetches the terms a seller advertised, recomputes the fingerprint, and halts before any signing key is invoked if they disagree. Works against any seller.",
+  "keywords": [
+    "lcp",
+    "legal-context-protocol",
+    "agentic-commerce",
+    "ai-agent",
+    "x402",
+    "ap2",
+    "acp",
+    "verify-before-pay",
+    "buyer-protection",
+    "agent-guard"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "bugs": {
+    "url": "https://github.com/IntegraLedger/integra-agent-guard/issues"
+  },
+  "homepage": "https://github.com/IntegraLedger/integra-agent-guard/tree/main/packages/agent-guard#readme"
+}

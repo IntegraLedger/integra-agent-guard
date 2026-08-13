@@ -1,0 +1,41 @@
+{
+  "name": "@integraledger/agent-guard-root",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@11.17.0",
+  "scripts": {
+    "audit": "pnpm audit --audit-level moderate",
+    "build": "pnpm -r build",
+    "check:docs": "node scripts/check-doc-snippets.mjs",
+    "check:public-boundary": "node scripts/check-public-boundary.mjs",
+    "check:vocab": "node scripts/check-vocab.mjs",
+    "check:versions": "node scripts/check-versions.mjs",
+    "check:wire": "node scripts/check-wire-identities.mjs",
+    "lint": "biome check .",
+    "mutation": "node scripts/mutation.mjs",
+    "mutation:all": "node scripts/mutation.mjs",
+    "release:approve": "node scripts/approve-staged.mjs",
+    "seal:wire": "node scripts/check-wire-identities.mjs --write",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "verify": "pnpm check:versions && pnpm check:wire && pnpm check:public-boundary && pnpm check:vocab && pnpm audit --audit-level moderate && pnpm -r build && pnpm lint && pnpm -r typecheck && pnpm check:docs && pnpm -r test"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@biomejs/biome": "2.5.5",
+    "@changesets/cli": "2.31.1",
+    "@integraledger/agent-guard": "workspace:*",
+    "@integraledger/lcp-conformance": "0.10.1",
+    "@integraledger/lcp-mcp-server": "workspace:*",
+    "@stryker-mutator/core": "9.6.1",
+    "@stryker-mutator/vitest-runner": "9.6.1",
+    "@types/node": "catalog:",
+    "publint": "0.3.22",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

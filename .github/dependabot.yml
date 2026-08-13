@@ -1,0 +1,71 @@
+# Automated dependency updates.
+#
+# Action pins drift silently without it: manual sweeps only happen when someone goes looking.
+#
+# Dependabot rather than Renovate: Renovate needs its GitHub App installed on the org before a config file
+# does anything at all, and a config that silently does nothing is worse than no config. Dependabot is
+# native, so this file takes effect on merge.
+#
+# THE 24h QUARANTINE STILL GOVERNS. `pnpm-workspace.yaml` sets `minimumReleaseAge: 1440`, enforced at
+# INSTALL time — so even if Dependabot opens a PR for a release minutes old, `pnpm install` refuses it and
+# the PR fails CI until the release is 24h old. That is why the CI workflows must keep running on
+# Dependabot's branches: a red build is what holds the quarantine, and a workflow that does not fire on
+# `dependabot/**` silently removes it.
+#
+# ⛔ SECURITY UPDATES FOR TRANSITIVE DEPENDENCIES DO NOT WORK, and the failure mode is a FALSE NEGATIVE.
+# Dependabot cannot author a pnpm `overrides:` entry, so a transitive dependency it cannot reach through a
+# direct manifest reads to it as unfixable — and it reports that as `security_update_not_possible` with a
+# `latest-resolvable-version` equal to the version already installed and an EMPTY conflicting-dependencies
+# list. That verdict means "Dependabot cannot do this". It never means "this cannot be done". Check every
+# such report by hand; a one-line override in `pnpm-workspace.yaml` usually resolves it.
+#
+# The `github-actions` ecosystem below is unaffected by that limitation.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for the routine action bumps — they move together and reviewing them apart is noise.
+      actions:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      dev-tooling:
+        patterns:
+          - "@biomejs/*"
+          - "@stryker-mutator/*"
+          - "dependency-cruiser"
+          - "publint"
+          - "@arethetypeswrong/*"
+          - "vitest"
+        update-types: ["minor", "patch"]
+    ignore:
+      # ⚠️ Partly INERT, and kept as intent rather than as enforcement. `@types/node`, `zod` and the MCP SDK
+      # are `"catalog:"` in the package manifests; their real versions live in `pnpm-workspace.yaml`, which
+      # Dependabot does not edit. The rules below are enforced by review and by `engines` until catalog
+      # coverage is confirmed — check a batch of PRs and record the answer here rather than assuming.
+      #
+      # @types/node is FLOOR-pinned to `engines.node` on purpose: the types must never describe APIs the
+      # oldest supported runtime lacks, or code typechecks against something that is not there at runtime.
+      # A major bump here follows raising the engines floor — never the other way around, and never
+      # automatically.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # The protocol line is a PEER dependency here, deliberately, so a consumer owns one copy of it. A
+      # bump is a decision about what this guard claims to interoperate with, made with the seal in
+      # `scripts/wire-identities.seal.json` in hand — `check:wire` fails the build if the identities moved.
+      # That is a review, not a merge.
+      - dependency-name: "@integraledger/lcp-*"
+    commit-message:
+      prefix: "chore"
