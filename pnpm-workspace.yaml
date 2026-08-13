@@ -28,7 +28,12 @@ overrides:
   # GHSA-7p8r-x3mc-p8w7 (high): host confusion via a backslash authority introducer. Dev-only,
   # via @stryker-mutator/core > ajv — no consumer path.
   fast-uri: ">=3.1.5"
-  # nanoid <3.3.17 (high): predictable output. Dev-only, via vitest > vite > postcss. Bounded `<4`
-  # deliberately: nanoid went ESM-only at 4.0.0 and postcss is CJS, so an unbounded `>=3.3.17` resolves
-  # to 6.x and satisfies the auditor by breaking the dependency.
-  nanoid: ">=3.3.17 <4"
+  # nanoid <3.3.18 — TWO advisories, one entry. GHSA-2v37-7h3g-55p8 (high): a custom generator loops
+  # indefinitely when size is zero, fixed in 3.3.18; it supersedes the predictable-output advisory that
+  # first added this entry, fixed in 3.3.17. Dev-only, via vitest > vite > postcss. The floor states 3.3.18
+  # rather than relying on resolution: `>=3.3.17` happens to install 3.3.18 today because that is the newest
+  # match, but a range that still admits a known-vulnerable version is safe by accident rather than by
+  # decision, and a regenerated lockfile could quietly take 3.3.17 back. Bounded `<4` deliberately: nanoid
+  # went ESM-only at 4.0.0 and postcss is CJS, so an unbounded `>=3.3.18` resolves to 6.x and satisfies the
+  # auditor by breaking the dependency.
+  nanoid: ">=3.3.18 <4"
