@@ -511,7 +511,7 @@ describe("readAdvertisedTerms", () => {
   });
 
   it("says NO FIELD DECLARED where the protocol has no room for a terms URL", () => {
-    // A2A, ACK, Visa TAP and Mastercard VI declare no `termsUrlField` at all. That is a fact about those
+    // A2A, ACK, Visa TAP and Mastercard VI declare no terms-URL slot at all. That is a fact about those
     // protocols, and it is a different fact from a document leaving a declared field empty.
     for (const terms of [
       readAdvertisedTerms("a2a", a2aTask),
@@ -541,10 +541,11 @@ describe("readAdvertisedTerms", () => {
   });
 
   it("says EMPTY, not unknowable, when the CANONICAL carrier answered and its nested field is absent", () => {
-    // The other half of the same x402 rule, and the one that makes it a rule rather than a protocol special
-    // case: `termsUrlField` lies inside `extensions.legalContext.info`, so when THAT carrier is the one that
-    // answered the declaration did reach the document, and an empty field is an absence the seller chose.
-    // The two arms turn on which carrier answered, so neither is pinned by the other's case.
+    // The x402 document with BOTH declared slots empty. It once turned on which carrier answered — the
+    // singular member reached only one of the two, so the same emptiness meant different things depending
+    // on where the hash came from. With both slots declared and read there is one answer: the seller had
+    // two places to put a locator and used neither, which is a choice about this document and is reported
+    // as one. The case is kept because that emptiness is exactly what the old reader could not name.
     const extensionsOnly = structuredClone(x402Challenge);
     // @ts-expect-error deleting an optional wire member the schema treats as optional
     delete extensionsOnly.accepts[0].extra;

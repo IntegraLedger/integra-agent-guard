@@ -23,7 +23,7 @@ const AcpSessionSchema = z.object({
  * non-integer minor-unit amount.
  *
  * `legal_context_url` is required, and the ACP placement manifest DECLARES it as
- * `termsUrlField: "metadata.legal_context_url"` — the field this parser demands is a field the placement
+ * `termsUrlFields: ["metadata.legal_context_url"]` — the field this parser demands is a field the placement
  * names, which is what makes the round-trip compose. It is deliberately NOT read from ACP's native
  * `links[type=terms_of_use]`: that link is the merchant's standing policy page, while this names the ATR
  * terms document for this transaction, and falling back to it would substitute one for the other.

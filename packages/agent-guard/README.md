@@ -132,12 +132,20 @@ Four answers are worth stating plainly, because each is a place a friendlier lib
   ACP/UCP one is contingent on the document, while `ap2`'s rule is a strict subset of `a2a`'s, so **every**
   AP2 envelope matches both and none is reachable through `parseProposalUniversal`. AP2 is a detect-and-name
   protocol here; `parseProposalFromAp2Envelope` exists and is called by name.
-- **An unlocatable terms URL is reported, not answered.** `legalContextUrl` is a union — `read`,
-  `no-field-declared`, `declared-field-empty`, or `undeclared-at-answering-carrier` — because
-  `PlacementManifest.termsUrlField` is singular and x402's names a path inside one of its two carriers. A
-  §C.4-illustrated challenge advertising in `accepts[].extra` really does carry a terms URL, and a bare
-  `undefined` there would contradict `parseProposalFromChallenge` reading the same bytes. The fix is a
-  per-alias declaration on the manifest; until it lands the shortfall is named.
+- **An absent terms URL says WHICH absence it is.** `legalContextUrl` is a union — `read`,
+  `no-field-declared`, or `declared-fields-empty` — because a bare `undefined` conflates two different
+  facts. `no-field-declared` is a fact about the PROTOCOL: it has nowhere to put a locator, and no document
+  of that protocol can be faulted for lacking one. `declared-fields-empty` is a fact about THIS DOCUMENT:
+  the protocol has room and this seller left every declared slot empty. Reporting the second as the first
+  would blame a protocol for a seller's silence.
+
+  It used to carry a fourth state, `undeclared-at-answering-carrier`, and that state is gone because the
+  defect requiring it is fixed. The manifest's terms-URL member was singular, so x402 could declare only one
+  of its two slots: a §C.4-illustrated challenge advertising in `accepts[].extra` really does carry a terms
+  URL, while the single declared path sat empty inside `extensions` — and calling that "no terms advertised"
+  would have asserted a silence this reader could not see. The member is plural now, every declared slot is
+  read and reconciled, and a slot riding a container the placement owns is declared on that container. There
+  is no carrier a declaration fails to reach, so the state is unreachable rather than merely unused.
 - **Carrier disagreement refuses.** Where a protocol declares more than one carrier, all of them are read
   and compared. Two different hashes on one document would let a seller advertise different terms to
   different readers of it, so this is deliberately stricter than the placement adapter's own `extract`,

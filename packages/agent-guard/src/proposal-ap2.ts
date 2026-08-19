@@ -114,7 +114,7 @@ export interface Ap2ProposalContext extends ProposalContext {
   /**
    * The terms document's locator.
    *
-   * AP2's placement is INTEGRITY-ONLY: `AP2_PLACEMENT` declares no `termsUrlField`, because the A2A
+   * AP2's placement is INTEGRITY-ONLY: `AP2_PLACEMENT` declares no `termsUrlFields`, because the A2A
    * `Message.metadata` map holds the reference and AP2 models no terms-URL field anywhere. So unlike ACP
    * (`metadata.legal_context_url`) and x402 (`extra.legalContextUrl`), the locator cannot come off the wire.
    * It comes from LCP §2 discovery — the seller's `/.well-known/legal-context.json` — resolved by the

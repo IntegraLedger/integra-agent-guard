@@ -57,7 +57,7 @@ const BASE_UNIT_INT = /^[0-9]+$/;
  * restating its regex keeps one definition of what an ATR hash is.
  *
  * **`legalContextUrl` is the field the placement names.** `placement-mpp` declares
- * `termsUrlField: "methodDetails.legalContextUrl"`, so the field this parser demands is the field the
+ * `termsUrlFields: ["methodDetails.legalContextUrl"]`, so the field this parser demands is the field the
  * manifest names — which is what makes the seller's write and this buyer's read compose. There is no
  * fallback to any other member: MPP defines none that means "these terms", and inventing one would gate the
  * buyer against a document nobody pointed at.
