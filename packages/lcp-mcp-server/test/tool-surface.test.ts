@@ -1,3 +1,4 @@
+import { supportedProtocols } from "@integraledger/lcp-placements";
 import { describe, expect, it } from "vitest";
 import { LCP_TOOL_NAMES } from "../src/server.js";
 import { connectTestClient, servingFetcher } from "./harness.js";
@@ -177,6 +178,23 @@ describe("the tool surface a client actually sees", () => {
     const client = await connectTestClient({ fetcher: servingFetcher({}) });
     for (const tool of (await client.listTools()).tools)
       expect((tool.description ?? "").length, tool.name).toBeGreaterThan(80);
+  });
+
+  it("names, in both placement tools, every protocol this build can actually reach", async () => {
+    // The set is part of the contract with the model, and it is derived rather than written down: a
+    // description naming none leaves an agent to guess, and one naming a protocol this build cannot reach
+    // sends it to a refusal it could have avoided. Derived from the registry here for the same reason it is
+    // derived there — a hand-written list is a second place the answer lives.
+    const client = await connectTestClient({ fetcher: servingFetcher({}) });
+    const desc = Object.fromEntries(
+      (await client.listTools()).tools.map((t) => [
+        t.name,
+        t.description ?? "",
+      ]),
+    );
+    for (const tool of ["lcp_place_reference", "lcp_extract_reference"])
+      for (const protocol of supportedProtocols())
+        expect(desc[tool], `${tool} must name ${protocol}`).toContain(protocol);
   });
 
   it("keeps the load-bearing instruction in each safety-critical description", async () => {
