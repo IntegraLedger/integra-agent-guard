@@ -3,5 +3,11 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "access": "public",
-  "baseBranch": "main"
+  "baseBranch": "main",
+  "fixed": [
+    [
+      "@integraledger/agent-guard",
+      "@integraledger/lcp-mcp-server"
+    ]
+  ]
 }
