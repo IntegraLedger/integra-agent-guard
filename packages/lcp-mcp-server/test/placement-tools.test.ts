@@ -7,6 +7,9 @@ import {
   text,
 } from "./harness.js";
 
+/** ACP declares a terms-URL slot, so an integrity-bearing advertisement must carry a locator. */
+const TERMS_URL = "https://seller.example/.well-known/legal-context.json";
+
 /** A 32-byte fingerprint. Any 64 hex digits; the value is not derived from anything, it is the carrier. */
 const ATR_HASH = `0x${"ab".repeat(32)}`;
 const REFERENCE = `lcp:sha256:${ATR_HASH}`;
@@ -30,6 +33,7 @@ describe("lcp_place_reference — dispatch through the placement registry", () =
       arguments: {
         protocol: "acp",
         reference: REFERENCE,
+        termsUrl: TERMS_URL,
         document: acpSession(),
       },
     });
@@ -56,7 +60,12 @@ describe("lcp_place_reference — dispatch through the placement registry", () =
     const original = acpSession();
     await client.callTool({
       name: "lcp_place_reference",
-      arguments: { protocol: "acp", reference: REFERENCE, document: original },
+      arguments: {
+        protocol: "acp",
+        reference: REFERENCE,
+        termsUrl: TERMS_URL,
+        document: original,
+      },
     });
     expect(original["metadata"]).toEqual({ merchant_ref: "order-9" });
   });
@@ -69,6 +78,7 @@ describe("lcp_place_reference — dispatch through the placement registry", () =
         arguments: {
           protocol: "acp",
           reference: REFERENCE,
+          termsUrl: TERMS_URL,
           document: acpSession(),
         },
       }),
@@ -116,6 +126,7 @@ describe("lcp_place_reference — dispatch through the placement registry", () =
       arguments: {
         protocol: "constructor",
         reference: REFERENCE,
+        termsUrl: TERMS_URL,
         document: {},
       },
     });
@@ -176,6 +187,7 @@ describe("a namespaced placement needs the deployment's own namespace", () => {
       arguments: {
         protocol: "mastercard-vi",
         reference: REFERENCE,
+        termsUrl: TERMS_URL,
         document: {},
       },
     });
@@ -210,6 +222,7 @@ describe("a placement that REFUSES the document it was handed", () => {
       arguments: {
         protocol: "mastercard-vi",
         reference: REFERENCE,
+        termsUrl: TERMS_URL,
         document: { constraints: [] },
       },
     });

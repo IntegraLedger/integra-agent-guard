@@ -130,7 +130,13 @@ describe("the tool surface a client actually sees", () => {
       ],
       lcp_scaffold_integration: ["scaffold", "target"],
       lcp_place_reference: ["document", "placement"],
-      lcp_extract_reference: ["placement", "reference", "type", "value"],
+      lcp_extract_reference: [
+        "placement",
+        "reference",
+        "termsUrl",
+        "type",
+        "value",
+      ],
     });
   });
 

@@ -4,6 +4,10 @@ import { referencePlacementStep } from "@integraledger/lcp-verify";
 import { describe, expect, it } from "vitest";
 import { parseProposalFromAcpCheckout } from "../src/proposal-acp.js";
 
+/** ACP declares a terms-URL slot, so an integrity-bearing advertisement must carry a locator: a hash no
+ *  counterparty can resolve is unverifiable to anyone who does not already hold the terms. */
+const TERMS_URL = "https://seller.example/terms/abc";
+
 /**
  * The Phase-B exit: `place → extract → referencePlacementStep → parseProposalFromAcpCheckout`, on ONE
  * document, across BOTH repos.
@@ -56,7 +60,7 @@ describe("ACP Phase-B exit round-trip", () => {
 
     // 1 — PLACE. The seller welds the record's fingerprint into the session.
     const placed = acpPlacement.place(
-      { type: "sha256", value: atrHash },
+      { ref: { type: "sha256", value: atrHash }, termsUrl: TERMS_URL },
       session,
     );
     if ("refused" in placed) throw new Error(`place refused: ${placed.code}`);
@@ -71,7 +75,12 @@ describe("ACP Phase-B exit round-trip", () => {
     const extracted = acpPlacement.extract(doc);
     if ("refused" in extracted)
       throw new Error(`extract refused: ${extracted.code}`);
-    expect(extracted.value).toEqual({ type: "sha256", value: atrHash });
+    // `extract` answers with the whole advertisement: the reference, and what this session says about
+    // where its terms live. ACP declares a slot, and this session leaves it empty.
+    expect(extracted.value).toEqual({
+      ref: { type: "sha256", value: atrHash },
+      termsUrl: { kind: "read", url: TERMS_URL },
+    });
 
     // 3 — VERIFY. The recovered reference names THIS record, and the step proves it.
     const step = referencePlacementStep(
@@ -81,14 +90,16 @@ describe("ACP Phase-B exit round-trip", () => {
     expect(step.status).toBe("proved");
 
     // 4 — PARSE. The buyer's gate reads the same document into a typed proposal. This is the step that
-    // catches a placement and a parser that disagree: the parser REQUIRES the terms URL, and it is a
-    // field the manifest declares (`termsUrlField`) rather than one the two halves happened to share.
+    // catches a placement and a parser that disagree: the parser REQUIRES the terms URL, and it is a slot
+    // the manifest declares (`termsUrlFields`) rather than one the two halves happened to share.
     const proposal = parseProposalFromAcpCheckout(doc, ctx);
     expect(proposal.advertisedAtrHash).toBe(atrHash);
     expect(proposal.legalContextUrl).toBe("https://seller.example/terms/abc");
     expect(proposal.offer.amount).toBe("1500");
     expect(proposal.offer.unit).toBe("usd");
-    expect(ACP_PLACEMENT.termsUrlField).toBe("metadata.legal_context_url");
+    expect(ACP_PLACEMENT.termsUrlFields).toEqual([
+      "metadata.legal_context_url",
+    ]);
   });
 
   it("impeaches when the session carries a reference to a DIFFERENT record", async () => {
@@ -106,7 +117,7 @@ describe("ACP Phase-B exit round-trip", () => {
     expect(otherAtrHash).not.toBe(atrHash);
 
     const placed = acpPlacement.place(
-      { type: "sha256", value: otherAtrHash },
+      { ref: { type: "sha256", value: otherAtrHash }, termsUrl: TERMS_URL },
       { id: "checkout_session_rt2", metadata: {} },
     );
     if ("refused" in placed) throw new Error(`place refused: ${placed.code}`);

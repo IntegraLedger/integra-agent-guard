@@ -332,38 +332,29 @@ export function detectProtocol(wire: unknown): ProtocolId | undefined {
 // ---------------------------------------------------------------------------------------------------------
 
 /**
- * The terms URL a document advertises at the path its manifest declares — or the reason there is no answer,
- * stated rather than folded into an `undefined`.
+ * The terms URL a document advertises at the slots its manifest declares — or the reason there is no
+ * answer, stated rather than folded into an `undefined`.
  *
- * A UNION, because `string | undefined` conflated three facts and only two of them are absences. The third is
- * x402 today: `PlacementManifest.termsUrlField` is SINGULAR, and x402's names a path INSIDE the
- * `extensions.legalContext.info` carrier — while the challenge LCP v1.38 §C.4 illustrates carries both the
- * reference and the URL in `accepts[].extra` instead, which the manifest declares as a `readAlso` alias. Read
- * such a challenge and the hash answers from the alias while the declared terms path holds nothing. That is
- * not "this seller advertised no terms"; it is "the manifest says nothing about where a terms URL rides on the
- * carrier that answered". Returning `undefined` there would assert the seller's silence — and
- * `parseProposalFromChallenge`, reading the same bytes in the same package, would contradict it.
+ * A UNION, because `string | undefined` conflated facts and only some of them are absences.
  *
- * The gap is owed back to the manifest: a per-alias terms-URL declaration is the fix and it is a protocol-repo
- * change. Until it lands this type REPORTS the gap, because a reader that cannot tell two facts apart must say
- * which one it cannot tell.
+ * IT USED TO CARRY A FOURTH STATE, and the state is gone because the defect that required it is fixed.
+ * `PlacementManifest.termsUrlField` was SINGULAR, so x402 could declare only one of its two slots: read a
+ * §C.4 challenge and the hash answered from `accepts[].extra` while the single declared path — inside
+ * `extensions.legalContext.info` — held nothing. Reporting that as "the seller advertised no terms" would
+ * have asserted a silence this reader could not see, so it reported `undeclared-at-answering-carrier`
+ * instead. `termsUrlFields` is now plural and every slot is read and reconciled, and a slot riding a
+ * container the placement owns is declared on the container — so there is no carrier a declaration fails
+ * to reach, and the state is unreachable rather than merely unused.
  */
 export type AdvertisedTermsUrl =
-  /** Read from the field the manifest declares. */
+  /** Read from a slot the manifest declares. Where several are declared they agreed. */
   | { readonly kind: "read"; readonly url: string }
-  /** The manifest declares no terms-URL field at all: the protocol has no room for one. */
+  /** The manifest declares no terms-URL slot at all: the protocol has no room for one. */
   | { readonly kind: "no-field-declared" }
-  /** The manifest declares one, its declaration reaches the answering carrier, and the document leaves it empty. */
-  | { readonly kind: "declared-field-empty"; readonly field: string }
-  /**
-   * The manifest's terms-URL path lies INSIDE the canonical carrier's own object, and the reference answered
-   * from a declared alias instead — so the declaration never reached the carrier this document used. Whether
-   * the document advertises a terms URL is UNKNOWN to this reader, not answered.
-   */
+  /** Slots are declared and this document leaves every one of them empty. */
   | {
-      readonly kind: "undeclared-at-answering-carrier";
-      readonly field: string;
-      readonly answeredAt: string;
+      readonly kind: "declared-fields-empty";
+      readonly fields: readonly string[];
     };
 
 /** What a protocol document advertises about the terms governing it. */
@@ -534,61 +525,25 @@ export function readAdvertisedTerms(
       `${protocol} advertises an lcp:${ref.type}: reference; the gate compares the advertised value against a recomputed record hash, which only a sha256 carrier can be`,
     );
 
+  // The reference walk above is this package's own, because "integrity carriers only" is a BUYER rule:
+  // a discovery link locates a standing page and attests nothing, so it is never a candidate here even
+  // though the placement will happily read one. The TERMS URL is the placement's, because every rule about
+  // it — which slots a protocol declares, that a slot riding a container the placement owns is addressed
+  // through that container, that two slots disagreeing is a refusal rather than a preference — belongs to
+  // the manifest, and a second implementation here could only agree with it until the day it did not.
+  const advertised = placement.extract(wire);
+  if ("refused" in advertised)
+    throw new Error(
+      `${protocol} document carries no readable advertisement (${advertised.code}): ${advertised.detail ?? ""}`,
+    );
+
   return {
     protocol,
     advertisedAtrHash: ref.value as `0x${string}`,
-    legalContextUrl: readTermsUrl(protocol, wire, manifest, sole.path),
+    legalContextUrl: advertised.value.termsUrl,
   };
 }
 
-/**
- * The terms URL at the field the manifest DECLARES — or which of the three absences this is.
- *
- * `termsUrlField` is a plain dotted path on the manifest: it declares no container of its own, so it is read
- * with `readAtPath` rather than through the reference carrier's container. A manifest that omits it (A2A, ACK,
- * Visa TAP, Mastercard VI) is stating that its protocol has no room for one — a fact, not a gap.
- *
- * NOTHING AT THE DECLARED PATH IS TWO DIFFERENT FACTS, and which one it is turns on where the reference
- * answered from. `termsUrlField` is declared once, beside the canonical `field`; a `readAlso` alias carries no
- * terms-URL declaration of its own. So when the declared path is nested INSIDE the canonical field — x402's
- * `extensions.legalContext.info.legalContextUrl` inside `extensions.legalContext.info` — and the reference
- * answered from an alias instead, the manifest's declaration was scoped to a carrier this document did not
- * use, and its emptiness says nothing about the document. When the declared path is a SIBLING of the canonical
- * field (ACP's `metadata.legal_context_url`, MPP's `methodDetails.legalContextUrl`), it is reachable whichever
- * carrier answered, and empty means empty.
- *
- * `answeredAt` is the path the reconciled reference was read from. `carrierSlots` puts the canonical field
- * first and `integrityHits` preserves that order, so it differs from `manifest.field` exactly when the
- * canonical carrier did not answer.
- */
-function readTermsUrl(
-  protocol: ProtocolId,
-  doc: unknown,
-  manifest: PlacementManifest,
-  answeredAt: string,
-): AdvertisedTermsUrl {
-  const field = manifest.termsUrlField;
-  if (field === undefined) return { kind: "no-field-declared" };
-  const raw = readAtPath(doc, field);
-  if (raw === undefined)
-    return answeredAt !== manifest.field &&
-      field.startsWith(`${manifest.field}.`)
-      ? { kind: "undeclared-at-answering-carrier", field, answeredAt }
-      : { kind: "declared-field-empty", field };
-  if (typeof raw !== "string")
-    throw new Error(
-      `${protocol} ${field} is not a string: ${JSON.stringify(raw)}`,
-    );
-  if (!raw.startsWith("https://"))
-    throw new Error(`legalContextUrl must be HTTPS: ${raw}`);
-  return { kind: "read", url: raw };
-}
-
-// ---------------------------------------------------------------------------------------------------------
-// The universal gate parse
-// ---------------------------------------------------------------------------------------------------------
-
-/** A parser from one protocol's wire document to the one `GateProposal` every parser produces. */
 export type ProposalParser = (
   wire: unknown,
   ctx: ProposalContext,

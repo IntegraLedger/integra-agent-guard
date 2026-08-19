@@ -129,9 +129,9 @@ export function parseAckReceipt(credential: unknown): AckReceiptFacts {
     throw new Error(
       `ACK receipt carries no readable LCP reference (${extracted.haltClass}/${extracted.code})`,
     );
-  if (extracted.value.type !== "sha256")
+  if (extracted.value.ref.type !== "sha256")
     throw new Error(
-      `ACK legalContext must be a sha256 carrier, got "${extracted.value.type}" — a locator commits to nothing`,
+      `ACK legalContext must be a sha256 carrier, got "${extracted.value.ref.type}" — a locator commits to nothing`,
     );
 
   const owned = lcpKeys();
@@ -147,7 +147,7 @@ export function parseAckReceipt(credential: unknown): AckReceiptFacts {
   );
 
   return {
-    atrHash: extracted.value.value as `0x${string}`,
+    atrHash: extracted.value.ref.value as `0x${string}`,
     paymentRequestToken,
     paymentOptionId,
     payerDid,

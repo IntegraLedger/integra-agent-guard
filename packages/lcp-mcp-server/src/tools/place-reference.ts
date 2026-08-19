@@ -25,6 +25,12 @@ const inputSchema = z.object({
     .describe(
       "The LCP §8.1 carrier string, `lcp:{type}:{value}` — exactly what `lcp_compute_atrhash` returns as `reference`.",
     ),
+  termsUrl: z
+    .string()
+    .optional()
+    .describe(
+      "Where the terms document the reference identifies can be fetched — `https://` only. REQUIRED where the protocol declares a slot for it and the reference is a digest: a hash no counterparty can resolve is unverifiable to anyone who does not already hold the terms, so the placement refuses one. Where the protocol declares no slot, supplying it is refused rather than silently dropped.",
+    ),
   document: documentShape.describe(
     "The host protocol's own document, as JSON. Returned unchanged with the reference added; the input is never mutated.",
   ),
@@ -76,7 +82,15 @@ export function registerPlaceReference(
         throw new Error(
           `"${args.reference}" is not a recognized LCP §8.1 carrier string — expected lcp:{type}:{value} with a registered type`,
         );
-      const outcome = adapter.place(ref, args.document);
+      // An ADVERTISEMENT: the reference, and — where the protocol has room for one — the locator. Passed
+      // through by omission rather than as an explicit `undefined`, because the manifest decides which of
+      // the two refusals an incomplete one earns.
+      const outcome = adapter.place(
+        args.termsUrl === undefined
+          ? { ref }
+          : { ref, termsUrl: args.termsUrl },
+        args.document,
+      );
       if (!("ok" in outcome)) return refusalResult(outcome);
       // `place` is typed `Outcome<unknown>` because a host document is whatever the host protocol says it
       // is. Parsing rather than casting keeps the widening honest: an adapter that somehow returned a

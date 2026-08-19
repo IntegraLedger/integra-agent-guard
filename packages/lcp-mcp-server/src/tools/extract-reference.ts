@@ -28,6 +28,18 @@ const outputSchema = z.object({
     .describe("The LCP §8.1 carrier string recovered from the document."),
   type: z.string().describe("The §8.2 carrier type, e.g. `sha256`."),
   value: z.string().describe("The carrier value, e.g. the 0x ATR hash."),
+  termsUrl: z
+    .discriminatedUnion("kind", [
+      z.object({ kind: z.literal("read"), url: z.string() }),
+      z.object({ kind: z.literal("no-field-declared") }),
+      z.object({
+        kind: z.literal("declared-fields-empty"),
+        fields: z.array(z.string()),
+      }),
+    ])
+    .describe(
+      "Where the document says its terms live. The absences are DISTINCT and both are answers: `no-field-declared` is a fact about the PROTOCOL — it has no slot for a locator — while `declared-fields-empty` is a fact about this DOCUMENT, whose seller left every declared slot empty. Collapsing them would report a seller's silence as a protocol's.",
+    ),
   placement: PLACEMENT_SUMMARY_SCHEMA,
 });
 
@@ -69,10 +81,15 @@ export function registerExtractReference(
       const adapter = resolveAdapter(args.protocol, ports);
       const outcome = adapter.extract(args.document);
       if (!("ok" in outcome)) return refusalResult(outcome);
+      // `extract` answers with the whole advertisement — the reference, and what the document says about
+      // where its terms live. The locator's ABSENCE is typed, so the reader is told whether the protocol
+      // has no slot at all or the seller left a declared one empty.
+      const { ref, termsUrl } = outcome.value;
       const out = {
-        reference: encodeLegalContextString(outcome.value),
-        type: outcome.value.type,
-        value: outcome.value.value,
+        reference: encodeLegalContextString(ref),
+        type: ref.type,
+        value: ref.value,
+        termsUrl,
         placement: manifestSummary(adapter.manifest),
       };
       return {

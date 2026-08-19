@@ -29,7 +29,7 @@
     "@biomejs/biome": "2.5.5",
     "@changesets/cli": "2.31.1",
     "@integraledger/agent-guard": "workspace:*",
-    "@integraledger/lcp-conformance": "0.10.1",
+    "@integraledger/lcp-conformance": "0.12.0",
     "@integraledger/lcp-mcp-server": "workspace:*",
     "@stryker-mutator/core": "9.6.1",
     "@stryker-mutator/vitest-runner": "9.6.1",

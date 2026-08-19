@@ -197,6 +197,7 @@ describe("every tool answers in text as well as structure", () => {
         arguments: {
           protocol: "acp",
           reference: `lcp:sha256:${oracle(TERMS)}`,
+          termsUrl: TERMS_URL,
           document: { metadata: {} },
         },
       },

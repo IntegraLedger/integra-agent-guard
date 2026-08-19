@@ -118,9 +118,14 @@ describe("verifySettled — post-settlement mechanical verify (turns a receipt i
     // The `??` default must yield to a caller's claim, not override or rewrite it. Every other test either
     // omits `claimedClass` or passes "TC-2", so nothing distinguished `?? "TC-2"` from an expression that
     // collapses ANY claim to "TC-2" — and that difference is the whole no-inflation property. A record with
-    // only TC-2 evidence, claimed at TC-3, must read `supportedClass: "TC-3"` with `verified: false`: the
-    // claim is reported honestly and refused. Collapsing it to TC-2 would report `verified: true` instead,
-    // turning an unsupported claim into a passing verdict — a record's class inflated by a silent default.
+    // only TC-2 evidence, claimed at TC-3, must report the claim VERBATIM and refuse it: `claimedClass`
+    // reads "TC-3" and `verified` is false. Collapsing the claim to TC-2 would report `verified: true`
+    // instead, turning an unsupported claim into a passing verdict.
+    //
+    // `supportedClass` is the other half and answers a different question — what the record actually
+    // reaches, computed from the steps — so it reads TC-2 here. The two together are the finding: aimed at
+    // TC-3, carries TC-2. It read TC-3 while the class echoed the claim, which is exactly the inflation
+    // this test was written to catch, showing up in the field that was supposed to be the honest one.
     const atrBytes = enc("# Terms\nlcp: 0.3\n");
     const atrHash = await hashAtr(atrBytes);
     const adapter: Pick<WeldAdapter, "recover"> = {
@@ -142,7 +147,8 @@ describe("verifySettled — post-settlement mechanical verify (turns a receipt i
         identity: { sellerAssurance: "legal-party", payer: "0xb15d" },
       },
     );
-    expect(report.supportedClass).toBe("TC-3");
+    expect(report.claimedClass).toBe("TC-3");
+    expect(report.supportedClass).toBe("TC-2");
     expect(report.verified).toBe(false);
   });
 

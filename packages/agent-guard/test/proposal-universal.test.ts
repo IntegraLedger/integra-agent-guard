@@ -522,22 +522,21 @@ describe("readAdvertisedTerms", () => {
       expect(terms.legalContextUrl).toEqual({ kind: "no-field-declared" });
   });
 
-  it("REPORTS the x402 §C.4 shortfall rather than answering an absence it cannot vouch for", () => {
-    // The v1.38 §C.4-illustrated challenge: reference and terms URL both in `accepts[].extra`, no `extensions`
-    // block. `termsUrlField` is singular and names a path inside the canonical carrier, so it is unreachable
-    // here — and this document DOES advertise a terms URL, which the named parser reads off the same bytes.
-    // An `undefined` would have made two entry points of one package contradict each other in silence.
+  it("READS the x402 §C.4 terms URL — the shortfall it used to report is fixed upstream", () => {
+    // The v1.38 §C.4-illustrated challenge: reference and terms URL both in `accepts[].extra`, no
+    // `extensions` block. This once reported `undeclared-at-answering-carrier` — the manifest's terms-URL
+    // member was SINGULAR and named a path inside the canonical carrier, unreachable on a document that
+    // used the alias, so the reader could not tell "no terms advertised" from "I cannot see where they
+    // would be". `termsUrlFields` is now plural and declares BOTH slots, so the URL is simply read, and
+    // the two entry points of this package answer the same bytes the same way rather than one of them
+    // reporting that it cannot.
     const c4 = structuredClone(x402Challenge);
     // @ts-expect-error deleting an optional wire member the schema treats as optional
     delete c4.extensions;
 
     const terms = readAdvertisedTerms("x402", c4);
     expect(terms.advertisedAtrHash).toBe(ATR);
-    expect(terms.legalContextUrl).toEqual({
-      kind: "undeclared-at-answering-carrier",
-      field: "extensions.legalContext.info.legalContextUrl",
-      answeredAt: "accepts.0.extra.atrHash",
-    });
+    expect(terms.legalContextUrl).toEqual({ kind: "read", url: TERMS });
     expect(parseProposalFromChallenge(c4, ctx).legalContextUrl).toBe(TERMS);
   });
 
@@ -555,8 +554,11 @@ describe("readAdvertisedTerms", () => {
     const terms = readAdvertisedTerms("x402", extensionsOnly);
     expect(terms.advertisedAtrHash).toBe(ATR);
     expect(terms.legalContextUrl).toEqual({
-      kind: "declared-field-empty",
-      field: "extensions.legalContext.info.legalContextUrl",
+      kind: "declared-fields-empty",
+      fields: [
+        "extensions.legalContext.info.legalContextUrl",
+        "accepts.0.extra.legalContextUrl",
+      ],
     });
   });
 
@@ -571,8 +573,8 @@ describe("readAdvertisedTerms", () => {
     const terms = readAdvertisedTerms("acp", aliasOnly);
     expect(terms.advertisedAtrHash).toBe(ATR);
     expect(terms.legalContextUrl).toEqual({
-      kind: "declared-field-empty",
-      field: "metadata.legal_context_url",
+      kind: "declared-fields-empty",
+      fields: ["metadata.legal_context_url"],
     });
   });
 
@@ -732,17 +734,20 @@ describe("readAdvertisedTerms", () => {
   });
 
   it("refuses a terms URL that is not HTTPS, and one that is not a string", () => {
+    // Both refusals are the PLACEMENT's, surfaced with its namespaced code rather than re-worded here. A
+    // rewritten message would be a second statement of when the rule fires, and the code is what a caller
+    // can actually match on.
     const insecure = structuredClone(acpSession);
     insecure.metadata.legal_context_url = "http://seller.example/terms";
     expect(() => readAdvertisedTerms("acp", insecure)).toThrow(
-      /legalContextUrl must be HTTPS/,
+      /acp\/terms-url-malformed/,
     );
 
     const notAString = structuredClone(acpSession);
     // @ts-expect-error a hostile wire is not obliged to send a string
     notAString.metadata.legal_context_url = 7;
     expect(() => readAdvertisedTerms("acp", notAString)).toThrow(
-      /is not a string/,
+      /acp\/terms-url-malformed/,
     );
   });
 
@@ -751,8 +756,8 @@ describe("readAdvertisedTerms", () => {
     // @ts-expect-error the terms URL is declared by the manifest, not required by the wire
     delete noUrl.metadata.legal_context_url;
     expect(readAdvertisedTerms("acp", noUrl).legalContextUrl).toEqual({
-      kind: "declared-field-empty",
-      field: "metadata.legal_context_url",
+      kind: "declared-fields-empty",
+      fields: ["metadata.legal_context_url"],
     });
   });
 

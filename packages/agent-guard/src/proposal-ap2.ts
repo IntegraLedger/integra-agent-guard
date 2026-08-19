@@ -166,7 +166,8 @@ export function parseProposalFromAp2Envelope(
     throw new Error(
       `AP2 envelope carries no readable LCP reference (${extracted.haltClass}/${extracted.code})`,
     );
-  const ref = extracted.value;
+  // AP2 declares no terms-URL slot, so the advertisement is the reference alone.
+  const ref = extracted.value.ref;
   if (ref.type !== "sha256")
     throw new Error(
       `AP2 legalContext must be a sha256 carrier, got "${ref.type}" — the gate compares the advertised ` +
