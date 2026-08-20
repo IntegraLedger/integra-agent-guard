@@ -27,7 +27,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",
     "@biomejs/biome": "2.5.5",
-    "@changesets/cli": "2.31.1",
+    "@changesets/cli": "3.0.0",
     "@integraledger/agent-guard": "workspace:*",
     "@integraledger/lcp-conformance": "0.12.0",
     "@integraledger/lcp-mcp-server": "workspace:*",
